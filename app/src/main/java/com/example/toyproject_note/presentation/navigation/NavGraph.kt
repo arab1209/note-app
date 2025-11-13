@@ -1,6 +1,9 @@
 package com.example.toyproject_note.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -9,14 +12,18 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.toyproject_note.presentation.main.screen.AddMemoScreen
 import com.example.toyproject_note.presentation.main.screen.MainScreen
+import com.example.toyproject_note.presentation.main.viewmodel.MainViewModel
 import com.example.toyproject_note.presentation.memdetail.screen.MemoDetailScreen
 import com.example.toyproject_note.ui.theme.MEMO_ID
 
 
 @Composable
 fun NavGraph(
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    viewModel: MainViewModel = hiltViewModel()
 ) {
+    val memoList by viewModel.memos.collectAsState()
+
     NavHost(
         navController = navController,
         startDestination = Screen.MemoMain.route
@@ -28,7 +35,8 @@ fun NavGraph(
                 },
                 onAddClick = {
                     navController.navigate(Screen.AddMemo.route)
-                }
+                },
+                memoList = memoList
             )
         }
 
@@ -53,7 +61,7 @@ fun NavGraph(
             AddMemoScreen(
                 onNavigateBack = {
                     navController.popBackStack()
-                }
+                } ,
             )
         }
     }

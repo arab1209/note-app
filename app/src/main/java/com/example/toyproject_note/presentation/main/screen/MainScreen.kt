@@ -1,5 +1,6 @@
 package com.example.toyproject_note.presentation.main.screen
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,12 +20,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -32,6 +35,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,27 +53,15 @@ import com.example.toyproject_note.ui.theme.AppColors
 import com.example.toyproject_note.ui.theme.Dimens
 import com.example.toyproject_note.ui.theme.MAIN_TITLE
 import com.example.toyproject_note.ui.theme.MainScreenConstants
+import com.example.toyproject_note.ui.theme.NOT_MEMO
+import com.example.toyproject_note.ui.theme.NOT_MEMO_ADD
 import com.example.toyproject_note.ui.theme.Typography
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    onMemoClick: (Long) -> Unit, onAddClick: () -> Unit, viewModel: MainViewModel = hiltViewModel()
+    onMemoClick: (Long) -> Unit, onAddClick: () -> Unit, memoList: List<NoteData>
 ) {
-    val dummyMemos = listOf(
-        NoteData(id = 1, title = "더더엄리 ㅏ ㅊ", content = ""),
-        NoteData(id = 2, title = "어오라랩도ㅡ동ㅇ", content = ""),
-        NoteData(id = 3, title = "너어어오어ㅏㅇ", content = ""),
-        NoteData(id = 4, title = "너넝아ㅏㅇ원", content = ""),
-        NoteData(id = 5, title = "ㅇㅇㅇ", content = ""),
-        NoteData(id = 6, title = "너너너", content = ""),
-        NoteData(id = 7, title = "모ㄴ으르으", content = ""),
-        NoteData(id = 8, title = "샘플 메모ㅏㅏㅏㅏㅏ", content = ""),
-        NoteData(id = 9, title = "길게 놀러 순서 변경", content = ""),
-        NoteData(id = 10, title = "원쪽으로 밀어 삭제", content = ""),
-        NoteData(id = 11, title = "오른쪽으로 밀어 새상 추가", content = "")
-    )
-
     Scaffold(topBar = {
         CenterAlignedTopAppBar(
             title = {
@@ -97,19 +90,50 @@ fun MainScreen(
                 .padding(paddingValues)
                 .background(MainScreenConstants.Colors.Background)
         ) {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(MainScreenConstants.Dimensions.ScreenHorizontalPadding)
-                    .clip(MainScreenConstants.Shapes.ContentShape)
-                    .background(MainScreenConstants.Colors.ContentBackground),
-                contentPadding = PaddingValues(
-                    vertical = MainScreenConstants.Dimensions.ContentPaddingVertical,
-                    horizontal = MainScreenConstants.Dimensions.ContentPaddingHorizontal
-                )
-            ) {
-                items(dummyMemos) { memo ->
-                    MemoItem(memo = memo, onClick = { onMemoClick(memo.id) })
+            if (memoList.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = Color.Gray.copy(alpha = 0.6f)
+                        )
+                        Spacer(modifier = Modifier.height(Dimens.PaddingLarge))
+                        Text(
+                            text = NOT_MEMO,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.Gray
+                        )
+                        Spacer(modifier = Modifier.height(Dimens.PaddingSmall))
+                        Text(
+                            text = NOT_MEMO_ADD,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.LightGray
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(MainScreenConstants.Dimensions.ScreenHorizontalPadding)
+                        .clip(MainScreenConstants.Shapes.ContentShape)
+                        .background(MainScreenConstants.Colors.ContentBackground),
+                    contentPadding = PaddingValues(
+                        vertical = MainScreenConstants.Dimensions.ContentPaddingVertical,
+                        horizontal = MainScreenConstants.Dimensions.ContentPaddingHorizontal
+                    )
+                ) {
+                    items(memoList) { memo ->
+                        MemoItem(memo = memo, onClick = { onMemoClick(memo.id) })
+                    }
                 }
             }
         }
@@ -151,10 +175,10 @@ fun MemoItem(
             )
         }
 
-        Divider(
+        HorizontalDivider(
             modifier = Modifier.padding(top = Dimens.PaddingSmall),
-            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
-            thickness = MainScreenConstants.Dimensions.ItemDividerThickness
+            thickness = MainScreenConstants.Dimensions.ItemDividerThickness,
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
         )
     }
 }
