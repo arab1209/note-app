@@ -21,4 +21,14 @@ class NoteRepositoryImpl @Inject constructor(
             entities.map { it.toDomain() }
         }
     }
+
+    override fun getNoteById(id: Long): Flow<NoteData> {
+        return noteDao.getNoteById(id).map { entity ->
+            entity.toDomain()
+        }
+    }
+
+    override suspend fun updateMemo(memo: NoteData) {
+        noteDao.updateMemo(memo.toEntity())
+    }
 }

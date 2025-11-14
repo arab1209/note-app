@@ -13,7 +13,7 @@ import androidx.navigation.navArgument
 import com.example.toyproject_note.presentation.main.screen.AddMemoScreen
 import com.example.toyproject_note.presentation.main.screen.MainScreen
 import com.example.toyproject_note.presentation.main.viewmodel.MainViewModel
-import com.example.toyproject_note.presentation.memdetail.screen.MemoDetailScreen
+import com.example.toyproject_note.presentation.memodetail.screen.MemoDetailScreen
 import com.example.toyproject_note.ui.theme.MEMO_ID
 
 
