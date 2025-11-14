@@ -1,6 +1,5 @@
 package com.example.toyproject_note.presentation.memodetail.screen
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,17 +21,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.toyproject_note.domain.model.NoteData
 import com.example.toyproject_note.presentation.memodetail.viewmodel.MemoDetailViewModel
 import com.example.toyproject_note.ui.theme.Dimens
 import com.example.toyproject_note.ui.theme.MainScreenConstants
@@ -45,96 +42,187 @@ fun MemoDetailScreen(
     onNavigateBack: () -> Unit,
     viewModel: MemoDetailViewModel = hiltViewModel()
 ) {
-    val memo by viewModel.getMemoById(memoId).collectAsState(initial = null)
-    val isEditMode by viewModel.isEditMode.collectAsState()
-    val editTitle by viewModel.editTitle.collectAsState()
-    val editContent by viewModel.editContent.collectAsState()
+    val memo by viewModel.getMemoById(memoId).collectAsStateWithLifecycle(initialValue = null)
+    val isEditMode by viewModel.isEditMode.collectAsStateWithLifecycle()
+    val editTitle by viewModel.editTitle.collectAsStateWithLifecycle()
+    val editContent by viewModel.editContent.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = "메모",
-                        fontSize = Typography.bodyLarge.fontSize,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "뒤로가기",
-                            tint = MainScreenConstants.Colors.TopBarTitle
-                        )
-                    }
-                },
-                actions = {
-                    TextButton(onClick = { viewModel.toggleEditMode(memo!!)}) {
-                        Text(
-                            text = if (isEditMode) "저장" else "수정",
-                            color = MainScreenConstants.Colors.TopBarTitle
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MainScreenConstants.Colors.TopBarBackground,
-                    titleContentColor = MainScreenConstants.Colors.TopBarTitle
-                )
+            MemoDetailTopBar(
+                isEditMode = isEditMode,
+                onNavigateBack = onNavigateBack,
+                onToggleEditMode = {
+                    memo?.let { viewModel.toggleEditMode(it) }
+                }
             )
         },
         containerColor = MainScreenConstants.Colors.Background
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(MainScreenConstants.Colors.Background)
-        ) {
-            Column(modifier = Modifier.padding(Dimens.PaddingLarge)) {
-                if (isEditMode) {
-                    // 제목 수정
-                    BasicTextField(
-                        value = editTitle,
-                        onValueChange = { viewModel.updateTitle(it)
-                                        Log.d("test", it)},
-                        textStyle = TextStyle(
-                            fontSize = Dimens.TitleNameFontSizes,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
+        MemoDetailContent(
+            memo = memo,
+            isEditMode = isEditMode,
+            editTitle = editTitle,
+            editContent = editContent,
+            onTitleChanged = viewModel::updateTitle,
+            onContentChanged = viewModel::updateContent,
+            modifier = Modifier.padding(paddingValues)
+        )
+    }
+}
 
-                    Spacer(modifier = Modifier.height(Dimens.PaddingSmall))
-
-                    // 내용 수정
-                    BasicTextField(
-                        value = editContent,
-                        onValueChange = { viewModel.updateContent(it) },
-                        textStyle = TextStyle(
-                            fontSize = Dimens.MemoFontSizes,
-                            color = Color.Black
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .fillMaxHeight()
-                    )
-                } else {
-                    // 읽기 모드
-                    Text(
-                        text = memo?.title ?: "",
-                        fontSize = Dimens.TitleNameFontSizes,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(Dimens.PaddingSmall))
-                    Text(
-                        text = memo?.content ?: "",
-                        fontSize = Dimens.MemoFontSizes
-                    )
-                }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MemoDetailTopBar(
+    isEditMode: Boolean,
+    onNavigateBack: () -> Unit,
+    onToggleEditMode: () -> Unit
+) {
+    CenterAlignedTopAppBar(
+        title = {
+            Text(
+                text = "메모",
+                fontSize = Typography.bodyLarge.fontSize,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        },
+        navigationIcon = {
+            IconButton(onClick = onNavigateBack) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "뒤로가기",
+                    tint = MainScreenConstants.Colors.TopBarTitle
+                )
             }
+        },
+        actions = {
+            TextButton(onClick = onToggleEditMode) {
+                Text(
+                    text = if (isEditMode) "저장" else "수정",
+                    color = MainScreenConstants.Colors.TopBarTitle
+                )
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MainScreenConstants.Colors.TopBarBackground,
+            titleContentColor = MainScreenConstants.Colors.TopBarTitle
+        )
+    )
+}
+
+@Composable
+private fun MemoDetailContent(
+    memo: NoteData?,
+    isEditMode: Boolean,
+    editTitle: String,
+    editContent: String,
+    onTitleChanged: (String) -> Unit,
+    onContentChanged: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MainScreenConstants.Colors.Background)
+            .padding(Dimens.PaddingLarge)
+    ) {
+        if (isEditMode) {
+            EditModeContent(
+                editTitle = editTitle,
+                editContent = editContent,
+                onTitleChanged = onTitleChanged,
+                onContentChanged = onContentChanged
+            )
+        } else {
+            ReadModeContent(memo = memo)
         }
     }
+}
+
+@Composable
+private fun EditModeContent(
+    editTitle: String,
+    editContent: String,
+    onTitleChanged: (String) -> Unit,
+    onContentChanged: (String) -> Unit
+) {
+    // 제목 입력
+    MemoTextField(
+        value = editTitle,
+        onValueChange = onTitleChanged,
+        textStyle = TextStyle(
+            fontSize = Dimens.TitleNameFontSizes,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        ),
+        placeholder = "제목을 입력하세요",
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth()
+    )
+
+    Spacer(modifier = Modifier.height(Dimens.PaddingSmall))
+
+    // 내용 입력
+    MemoTextField(
+        value = editContent,
+        onValueChange = onContentChanged,
+        textStyle = TextStyle(
+            fontSize = Dimens.MemoFontSizes,
+            color = Color.Black
+        ),
+        placeholder = "내용을 입력하세요",
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight()
+    )
+}
+
+@Composable
+private fun ReadModeContent(
+    memo: NoteData?
+) {
+    Text(
+        text = memo?.title ?: "",
+        fontSize = Dimens.TitleNameFontSizes,
+        fontWeight = FontWeight.Bold
+    )
+
+    Spacer(modifier = Modifier.height(Dimens.PaddingSmall))
+
+    Text(
+        text = memo?.content ?: "",
+        fontSize = Dimens.MemoFontSizes
+    )
+}
+
+@Composable
+private fun MemoTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    textStyle: TextStyle,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    singleLine: Boolean = false
+) {
+    BasicTextField(
+        value = value,
+        onValueChange = onValueChange,
+        textStyle = textStyle,
+        singleLine = singleLine,
+        modifier = modifier,
+        decorationBox = { innerTextField ->
+            Box(modifier = Modifier.fillMaxWidth()) {
+                if (value.isEmpty()) {
+                    Text(
+                        text = placeholder,
+                        style = textStyle.copy(
+                            color = Color.Gray.copy(alpha = 0.6f)
+                        )
+                    )
+                }
+                innerTextField()
+            }
+        }
+    )
 }
