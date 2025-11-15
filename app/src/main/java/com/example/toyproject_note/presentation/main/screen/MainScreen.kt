@@ -32,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -47,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.toyproject_note.domain.model.NoteData
+import com.example.toyproject_note.presentation.main.util.SwipeableItemCard
 import com.example.toyproject_note.presentation.main.viewmodel.MainViewModel
 import com.example.toyproject_note.ui.theme.ADD_MEMO
 import com.example.toyproject_note.ui.theme.AppColors
@@ -60,30 +62,40 @@ import com.example.toyproject_note.ui.theme.Typography
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    onMemoClick: (Long) -> Unit, onAddClick: () -> Unit, memoList: List<NoteData>
+    onMemoClick: (Long) -> Unit,
+    onAddClick: () -> Unit,
+    onDeleteMemo: (memo: NoteData) -> Unit, // 🔥 삭제 콜백 추가
+    memoList: List<NoteData>
 ) {
-    Scaffold(topBar = {
-        CenterAlignedTopAppBar(
-            title = {
-                Text(
-                    text = MAIN_TITLE, fontSize = Typography.bodyLarge.fontSize
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        text = MAIN_TITLE,
+                        fontSize = Typography.bodyLarge.fontSize
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MainScreenConstants.Colors.TopBarBackground,
+                    titleContentColor = MainScreenConstants.Colors.TopBarTitle
                 )
-            }, colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MainScreenConstants.Colors.TopBarBackground,
-                titleContentColor = MainScreenConstants.Colors.TopBarTitle
             )
-        )
-    }, containerColor = MainScreenConstants.Colors.Background, floatingActionButton = {
-        FloatingActionButton(
-            onClick = onAddClick,
-            containerColor = MainScreenConstants.Colors.FabContainer,
-            contentColor = MainScreenConstants.Colors.FabIcon
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add, contentDescription = ADD_MEMO
-            )
+        },
+        containerColor = MainScreenConstants.Colors.Background,
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onAddClick,
+                containerColor = MainScreenConstants.Colors.FabContainer,
+                contentColor = MainScreenConstants.Colors.FabIcon
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = ADD_MEMO
+                )
+            }
         }
-    }) { paddingValues ->
+    ) { paddingValues ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -131,15 +143,21 @@ fun MainScreen(
                         horizontal = MainScreenConstants.Dimensions.ContentPaddingHorizontal
                     )
                 ) {
-                    items(memoList) { memo ->
-                        MemoItem(memo = memo, onClick = { onMemoClick(memo.id) })
+                    items(
+                        items = memoList,
+                        key = { it.id }
+                    ) { memo ->
+                        SwipeableItemCard(
+                            memo = memo,
+                            onClick = { onMemoClick(memo.id) },
+                            onDelete = { onDeleteMemo(memo) }
+                        )
                     }
                 }
             }
         }
     }
 }
-
 @Composable
 fun MemoItem(
     memo: NoteData, onClick: () -> Unit

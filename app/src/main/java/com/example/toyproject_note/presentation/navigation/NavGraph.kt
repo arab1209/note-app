@@ -36,7 +36,8 @@ fun NavGraph(
                 onAddClick = {
                     navController.navigate(Screen.AddMemo.route)
                 },
-                memoList = memoList
+                memoList = memoList,
+                onDeleteMemo = viewModel::deleteMemo
             )
         }
 

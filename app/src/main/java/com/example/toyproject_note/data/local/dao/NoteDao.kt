@@ -1,6 +1,7 @@
 package com.example.toyproject_note.data.local.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
@@ -20,4 +21,7 @@ interface NoteDao {
 
    @Update
    suspend fun updateMemo(memo: NoteEntity)
+
+   @Delete
+   suspend fun deleteMemo(memo: NoteEntity)
 }

@@ -8,4 +8,5 @@ interface NoteRepository {
     fun getAllMemos(): Flow<List<NoteData>>
     fun getNoteById(id: Long): Flow<NoteData>
     suspend fun updateMemo(memo: NoteData)
+    suspend fun deleteMemo(memo: NoteData)
 }
