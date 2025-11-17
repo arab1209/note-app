@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.toyproject_note.domain.model.NoteData
 import com.example.toyproject_note.presentation.main.util.AnimationSpecs
+import com.example.toyproject_note.presentation.main.util.rememberMemoItemAnimations
 import com.example.toyproject_note.presentation.main.viewmodel.MainViewModel
 import com.example.toyproject_note.ui.theme.ADD_MEMO
 import com.example.toyproject_note.ui.theme.AppColors
@@ -112,15 +113,17 @@ fun MainScreen(
         },
         containerColor = MainScreenConstants.Colors.Background,
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddClick,
-                containerColor = MainScreenConstants.Colors.FabContainer,
-                contentColor = MainScreenConstants.Colors.FabIcon
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = ADD_MEMO
-                )
+            if(!isEditMode) {
+                FloatingActionButton(
+                    onClick = onAddClick,
+                    containerColor = MainScreenConstants.Colors.FabContainer,
+                    contentColor = MainScreenConstants.Colors.FabIcon
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = ADD_MEMO
+                    )
+                }
             }
         }
     ) { paddingValues ->
@@ -199,44 +202,12 @@ fun MemoItem(
     isEditMode: Boolean = false,
     onDeleteClick: () -> Unit = {}
 ) {
-    // 🔥 UI 상태 - Composable에서 관리
     var showDeleteButton by remember { mutableStateOf(false) }
 
-    // 애니메이션 상태들
-    val iconAreaWidth by animateDpAsState(
-        targetValue = if (isEditMode) MemoItemConstants.ICON_AREA_WIDTH else 0.dp,
-        animationSpec = AnimationSpecs.standardTween(),
-        label = "icon_area_width"
-    )
-
-    val iconAlpha by animateFloatAsState(
-        targetValue = if (isEditMode) 1f else 0f,
-        animationSpec = AnimationSpecs.standardTween(),
-        label = "icon_alpha"
-    )
-
-    val deleteButtonWidth by animateDpAsState(
-        targetValue = if (showDeleteButton) MemoItemConstants.DELETE_BUTTON_WIDTH else 0.dp,
-        animationSpec = AnimationSpecs.standardTween(),
-        label = "delete_button_width"
-    )
-
-    val deleteButtonAlpha by animateFloatAsState(
-        targetValue = if (showDeleteButton) 1f else 0f,
-        animationSpec = AnimationSpecs.standardTween(),
-        label = "delete_button_alpha"
-    )
-
-    val arrowWidth by animateDpAsState(
-        targetValue = if (showDeleteButton) 0.dp else MainScreenConstants.Dimensions.ItemIconSize,
-        animationSpec = AnimationSpecs.standardTween(),
-        label = "arrow_width"
-    )
-
-    val arrowAlpha by animateFloatAsState(
-        targetValue = if (isEditMode || showDeleteButton) 0f else 1f,
-        animationSpec = AnimationSpecs.standardTween(),
-        label = "arrow_alpha"
+    // 🔥 애니메이션 상태들을 한 번에 관리
+    val animations = rememberMemoItemAnimations(
+        isEditMode = isEditMode,
+        showDeleteButton = showDeleteButton
     )
 
     LaunchedEffect(isEditMode) {
@@ -249,12 +220,7 @@ fun MemoItem(
         memo = memo,
         onClick = onClick,
         showDeleteButton = showDeleteButton,
-        iconAreaWidth = iconAreaWidth,
-        iconAlpha = iconAlpha,
-        deleteButtonWidth = deleteButtonWidth,
-        deleteButtonAlpha = deleteButtonAlpha,
-        arrowWidth = arrowWidth,
-        arrowAlpha = arrowAlpha,
+        animations = animations,
         onToggleDelete = { showDeleteButton = !showDeleteButton },
         onDeleteConfirm = {
             onDeleteClick()

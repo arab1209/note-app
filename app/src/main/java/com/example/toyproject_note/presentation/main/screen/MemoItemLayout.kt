@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.example.toyproject_note.domain.model.MemoItemAnimationState
 import com.example.toyproject_note.domain.model.NoteData
 import com.example.toyproject_note.presentation.main.util.AnimatedArrowIcon
 import com.example.toyproject_note.presentation.main.util.AnimatedDeleteButton
@@ -33,12 +34,7 @@ fun MemoItemLayout(
     memo: NoteData,
     onClick: () -> Unit,
     showDeleteButton: Boolean,
-    iconAreaWidth: Dp,
-    iconAlpha: Float,
-    deleteButtonWidth: Dp,
-    deleteButtonAlpha: Float,
-    arrowWidth: Dp,
-    arrowAlpha: Float,
+    animations: MemoItemAnimationState,
     onToggleDelete: () -> Unit,
     onDeleteConfirm: () -> Unit,
     modifier: Modifier = Modifier
@@ -61,16 +57,16 @@ fun MemoItemLayout(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 마이너스 아이콘
+            // 마이너스 아이콘 영역
             Box(
                 modifier = Modifier
-                    .width(iconAreaWidth)
+                    .width(animations.iconAreaWidth) // animations 객체에서 접근
                     .height(MemoItemConstants.ICON_SIZE),
                 contentAlignment = Alignment.CenterStart
             ) {
                 AnimatedMinusIcon(
-                    isVisible = iconAreaWidth > 0.dp,
-                    alpha = iconAlpha,
+                    isVisible = animations.iconAreaWidth > 0.dp,
+                    alpha = animations.iconAlpha, // animations 객체에서 접근
                     onToggleDelete = onToggleDelete
                 )
             }
@@ -88,15 +84,15 @@ fun MemoItemLayout(
 
             // 삭제 버튼
             AnimatedDeleteButton(
-                width = deleteButtonWidth,
-                alpha = deleteButtonAlpha,
+                width = animations.deleteButtonWidth, // animations 객체에서 접근
+                alpha = animations.deleteButtonAlpha, // animations 객체에서 접근
                 onDeleteConfirm = onDeleteConfirm
             )
 
             // 화살표 아이콘
             AnimatedArrowIcon(
-                width = arrowWidth,
-                alpha = arrowAlpha
+                width = animations.arrowWidth, // animations 객체에서 접근
+                alpha = animations.arrowAlpha // animations 객체에서 접근
             )
         }
 
