@@ -22,13 +22,14 @@ fun NavGraph(
     navController: NavHostController = rememberNavController(),
     viewModel: MainViewModel = hiltViewModel()
 ) {
-    val memoList by viewModel.memos.collectAsState()
-
     NavHost(
         navController = navController,
         startDestination = Screen.MemoMain.route
     ) {
         composable(route = Screen.MemoMain.route) {
+            val memoList by viewModel.memos.collectAsState()
+            val isEditMode by viewModel.isEditMode.collectAsState()
+
             MainScreen(
                 onMemoClick = { memoId ->
                     navController.navigate(Screen.MemoDetail.createRoute(memoId))
@@ -36,8 +37,10 @@ fun NavGraph(
                 onAddClick = {
                     navController.navigate(Screen.AddMemo.route)
                 },
+                onEditModeChange = viewModel::updateEditMode,
+                onDeleteClick = viewModel::deleteMemo,
                 memoList = memoList,
-                onDeleteMemo = viewModel::deleteMemo
+                isEditMode = isEditMode,
             )
         }
 

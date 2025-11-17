@@ -1,6 +1,10 @@
 package com.example.toyproject_note.presentation.main.screen
 
 import android.util.Log
+import androidx.compose.animation.core.EaseInOutCubic
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -33,13 +37,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -48,24 +59,29 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.toyproject_note.domain.model.NoteData
-import com.example.toyproject_note.presentation.main.util.SwipeableItemCard
+import com.example.toyproject_note.presentation.main.util.AnimationSpecs
 import com.example.toyproject_note.presentation.main.viewmodel.MainViewModel
 import com.example.toyproject_note.ui.theme.ADD_MEMO
 import com.example.toyproject_note.ui.theme.AppColors
 import com.example.toyproject_note.ui.theme.Dimens
+import com.example.toyproject_note.ui.theme.FINISH_MEMO
 import com.example.toyproject_note.ui.theme.MAIN_TITLE
 import com.example.toyproject_note.ui.theme.MainScreenConstants
+import com.example.toyproject_note.ui.theme.MemoItemConstants
 import com.example.toyproject_note.ui.theme.NOT_MEMO
 import com.example.toyproject_note.ui.theme.NOT_MEMO_ADD
 import com.example.toyproject_note.ui.theme.Typography
+import com.example.toyproject_note.ui.theme.UPDATE_MEMO
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     onMemoClick: (Long) -> Unit,
     onAddClick: () -> Unit,
-    onDeleteMemo: (memo: NoteData) -> Unit, // 🔥 삭제 콜백 추가
-    memoList: List<NoteData>
+    onEditModeChange: (Boolean) -> Unit,
+    onDeleteClick: (memo: NoteData) -> Unit,
+    memoList: List<NoteData>,
+    isEditMode: Boolean,
 ) {
     Scaffold(
         topBar = {
@@ -74,6 +90,18 @@ fun MainScreen(
                     Text(
                         text = MAIN_TITLE,
                         fontSize = Typography.bodyLarge.fontSize
+                    )
+                },
+                navigationIcon = {
+                    Text(
+                        text = if (isEditMode) FINISH_MEMO else UPDATE_MEMO,
+                        fontSize = Typography.bodyLarge.fontSize,
+                        color = MainScreenConstants.Colors.TopBarTitle,
+                        modifier = Modifier
+                            .clickable {
+                                onEditModeChange(!isEditMode)
+                            }
+                            .padding(Dimens.PaddingLarge)
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -147,10 +175,15 @@ fun MainScreen(
                         items = memoList,
                         key = { it.id }
                     ) { memo ->
-                        SwipeableItemCard(
+                        MemoItem(
                             memo = memo,
-                            onClick = { onMemoClick(memo.id) },
-                            onDelete = { onDeleteMemo(memo) }
+                            onClick = {
+                                if (!isEditMode) {
+                                    onMemoClick(memo.id)
+                                }
+                            },
+                            isEditMode = isEditMode,
+                            onDeleteClick = { onDeleteClick(memo) }
                         )
                     }
                 }
@@ -158,45 +191,74 @@ fun MainScreen(
         }
     }
 }
+
 @Composable
 fun MemoItem(
-    memo: NoteData, onClick: () -> Unit
+    memo: NoteData,
+    onClick: () -> Unit,
+    isEditMode: Boolean = false,
+    onDeleteClick: () -> Unit = {}
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .background(MainScreenConstants.Colors.ItemBackground)
-            .padding(
-                horizontal = Dimens.PaddingMedium, vertical = Dimens.PaddingSmall
-            )
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = memo.title,
-                fontWeight = FontWeight.Normal,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
-                color = MaterialTheme.colorScheme.onSurface,
-                fontSize = MainScreenConstants.Dimensions.MemoFontSize
-            )
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = "상세보기",
-                modifier = Modifier.size(MainScreenConstants.Dimensions.ItemIconSize),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+    // 🔥 UI 상태 - Composable에서 관리
+    var showDeleteButton by remember { mutableStateOf(false) }
 
-        HorizontalDivider(
-            modifier = Modifier.padding(top = Dimens.PaddingSmall),
-            thickness = MainScreenConstants.Dimensions.ItemDividerThickness,
-            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-        )
+    // 애니메이션 상태들
+    val iconAreaWidth by animateDpAsState(
+        targetValue = if (isEditMode) MemoItemConstants.ICON_AREA_WIDTH else 0.dp,
+        animationSpec = AnimationSpecs.standardTween(),
+        label = "icon_area_width"
+    )
+
+    val iconAlpha by animateFloatAsState(
+        targetValue = if (isEditMode) 1f else 0f,
+        animationSpec = AnimationSpecs.standardTween(),
+        label = "icon_alpha"
+    )
+
+    val deleteButtonWidth by animateDpAsState(
+        targetValue = if (showDeleteButton) MemoItemConstants.DELETE_BUTTON_WIDTH else 0.dp,
+        animationSpec = AnimationSpecs.standardTween(),
+        label = "delete_button_width"
+    )
+
+    val deleteButtonAlpha by animateFloatAsState(
+        targetValue = if (showDeleteButton) 1f else 0f,
+        animationSpec = AnimationSpecs.standardTween(),
+        label = "delete_button_alpha"
+    )
+
+    val arrowWidth by animateDpAsState(
+        targetValue = if (showDeleteButton) 0.dp else MainScreenConstants.Dimensions.ItemIconSize,
+        animationSpec = AnimationSpecs.standardTween(),
+        label = "arrow_width"
+    )
+
+    val arrowAlpha by animateFloatAsState(
+        targetValue = if (isEditMode || showDeleteButton) 0f else 1f,
+        animationSpec = AnimationSpecs.standardTween(),
+        label = "arrow_alpha"
+    )
+
+    LaunchedEffect(isEditMode) {
+        if (!isEditMode) {
+            showDeleteButton = false
+        }
     }
+
+    MemoItemLayout(
+        memo = memo,
+        onClick = onClick,
+        showDeleteButton = showDeleteButton,
+        iconAreaWidth = iconAreaWidth,
+        iconAlpha = iconAlpha,
+        deleteButtonWidth = deleteButtonWidth,
+        deleteButtonAlpha = deleteButtonAlpha,
+        arrowWidth = arrowWidth,
+        arrowAlpha = arrowAlpha,
+        onToggleDelete = { showDeleteButton = !showDeleteButton },
+        onDeleteConfirm = {
+            onDeleteClick()
+            showDeleteButton = false
+        }
+    )
 }
