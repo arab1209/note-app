@@ -35,25 +35,25 @@ import com.example.toyproject_note.ui.theme.Dimens
 import com.example.toyproject_note.ui.theme.MainScreenConstants
 import com.example.toyproject_note.ui.theme.Typography
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MemoDetailScreen(
     memoId: Long,
     onNavigateBack: () -> Unit,
-    viewModel: MemoDetailViewModel = hiltViewModel()
+    memo: NoteData?,
+    isEditMode: Boolean,
+    editTitle: String,
+    editContent: String,
+    toggleEditMode: (memo: NoteData) -> Unit,
+    onTitleChanged: (String) -> Unit,
+    onContentChanged: (String) -> Unit
 ) {
-    val memo by viewModel.getMemoById(memoId).collectAsStateWithLifecycle(initialValue = null)
-    val isEditMode by viewModel.isEditMode.collectAsStateWithLifecycle()
-    val editTitle by viewModel.editTitle.collectAsStateWithLifecycle()
-    val editContent by viewModel.editContent.collectAsStateWithLifecycle()
-
     Scaffold(
         topBar = {
             MemoDetailTopBar(
                 isEditMode = isEditMode,
                 onNavigateBack = onNavigateBack,
                 onToggleEditMode = {
-                    memo?.let { viewModel.toggleEditMode(it) }
+                    memo?.let { toggleEditMode(it) }
                 }
             )
         },
@@ -64,8 +64,8 @@ fun MemoDetailScreen(
             isEditMode = isEditMode,
             editTitle = editTitle,
             editContent = editContent,
-            onTitleChanged = viewModel::updateTitle,
-            onContentChanged = viewModel::updateContent,
+            onTitleChanged = onTitleChanged,
+            onContentChanged = onContentChanged,
             modifier = Modifier.padding(paddingValues)
         )
     }
