@@ -24,7 +24,7 @@ import com.example.toyproject_note.ui.theme.MEMO_ID
 fun NavGraph(
     navController: NavHostController = rememberNavController(),
     viewModel: MainViewModel = hiltViewModel(),
-    detailViewModel: MemoDetailViewModel = hiltViewModel()
+    detailViewModel: MemoDetailViewModel = hiltViewModel(),
 ) {
     NavHost(
         navController = navController,
@@ -56,16 +56,15 @@ fun NavGraph(
                 }
             )
         ) { backStackEntry ->
-            val memoId = backStackEntry.arguments?.getLong(MEMO_ID) ?: -1L
-
-            val memo by detailViewModel.getMemoById(memoId).collectAsStateWithLifecycle(initialValue = null)
+            val memo by detailViewModel.getMemoById(
+                backStackEntry.arguments?.getLong(MEMO_ID) ?: -1L
+            ).collectAsStateWithLifecycle(initialValue = null)
             val isEditMode by detailViewModel.isEditMode.collectAsStateWithLifecycle()
             val editTitle by detailViewModel.editTitle.collectAsStateWithLifecycle()
             val editContent by detailViewModel.editContent.collectAsStateWithLifecycle()
 
 
             MemoDetailScreen(
-                memoId = memoId,
                 onNavigateBack = { navController.popBackStack() },
                 memo = memo,
                 isEditMode = isEditMode,
@@ -81,7 +80,7 @@ fun NavGraph(
             AddMemoScreen(
                 onNavigateBack = {
                     navController.popBackStack()
-                } ,
+                },
             )
         }
     }

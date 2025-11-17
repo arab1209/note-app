@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.toyproject_note.domain.model.NoteData
+import com.example.toyproject_note.presentation.memodetail.util.ShareButton
 import com.example.toyproject_note.presentation.memodetail.viewmodel.MemoDetailViewModel
 import com.example.toyproject_note.ui.theme.Dimens
 import com.example.toyproject_note.ui.theme.MainScreenConstants
@@ -37,7 +38,6 @@ import com.example.toyproject_note.ui.theme.Typography
 
 @Composable
 fun MemoDetailScreen(
-    memoId: Long,
     onNavigateBack: () -> Unit,
     memo: NoteData?,
     isEditMode: Boolean,
@@ -97,6 +97,9 @@ private fun MemoDetailTopBar(
             }
         },
         actions = {
+            ShareButton(
+                onShareClick =  {}
+            )
             TextButton(onClick = onToggleEditMode) {
                 Text(
                     text = if (isEditMode) "저장" else "수정",
