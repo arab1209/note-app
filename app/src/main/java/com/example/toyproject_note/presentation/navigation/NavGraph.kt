@@ -31,8 +31,8 @@ fun NavGraph(
         startDestination = Screen.MemoMain.route
     ) {
         composable(route = Screen.MemoMain.route) {
-            val memoList by viewModel.memos.collectAsState()
-            val isEditMode by viewModel.isEditMode.collectAsState()
+            val memoList by viewModel.memos.collectAsStateWithLifecycle()
+            val isEditMode by viewModel.isEditMode.collectAsStateWithLifecycle()
 
             MainScreen(
                 onMemoClick = { memoId ->
