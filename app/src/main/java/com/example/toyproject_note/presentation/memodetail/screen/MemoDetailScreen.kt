@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.toyproject_note.domain.model.NoteData
+import com.example.toyproject_note.presentation.CommonTopAppBar
 import com.example.toyproject_note.presentation.memodetail.util.ShareButton
 import com.example.toyproject_note.presentation.memodetail.viewmodel.MemoDetailViewModel
 import com.example.toyproject_note.ui.theme.Dimens
@@ -78,15 +79,8 @@ private fun MemoDetailTopBar(
     onNavigateBack: () -> Unit,
     onToggleEditMode: () -> Unit
 ) {
-    CenterAlignedTopAppBar(
-        title = {
-            Text(
-                text = "메모",
-                fontSize = Typography.bodyLarge.fontSize,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        },
+    CommonTopAppBar(
+        title = "메모",
         navigationIcon = {
             IconButton(onClick = onNavigateBack) {
                 Icon(
@@ -97,9 +91,7 @@ private fun MemoDetailTopBar(
             }
         },
         actions = {
-            ShareButton(
-                onShareClick =  {}
-            )
+            ShareButton(onShareClick = {})
             TextButton(onClick = onToggleEditMode) {
                 Text(
                     text = if (isEditMode) "저장" else "수정",
@@ -107,10 +99,6 @@ private fun MemoDetailTopBar(
                 )
             }
         },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MainScreenConstants.Colors.TopBarBackground,
-            titleContentColor = MainScreenConstants.Colors.TopBarTitle
-        )
     )
 }
 
@@ -150,7 +138,6 @@ private fun EditModeContent(
     onTitleChanged: (String) -> Unit,
     onContentChanged: (String) -> Unit
 ) {
-    // 제목 입력
     MemoTextField(
         value = editTitle,
         onValueChange = onTitleChanged,
@@ -166,7 +153,6 @@ private fun EditModeContent(
 
     Spacer(modifier = Modifier.height(Dimens.PaddingSmall))
 
-    // 내용 입력
     MemoTextField(
         value = editContent,
         onValueChange = onContentChanged,

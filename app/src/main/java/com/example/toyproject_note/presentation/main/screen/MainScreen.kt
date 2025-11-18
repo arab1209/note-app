@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.toyproject_note.domain.model.NoteData
+import com.example.toyproject_note.presentation.CommonTopAppBar
 import com.example.toyproject_note.presentation.main.util.AnimationSpecs
 import com.example.toyproject_note.presentation.main.util.rememberMemoItemAnimations
 import com.example.toyproject_note.presentation.main.viewmodel.MainViewModel
@@ -74,7 +75,6 @@ import com.example.toyproject_note.ui.theme.NOT_MEMO_ADD
 import com.example.toyproject_note.ui.theme.Typography
 import com.example.toyproject_note.ui.theme.UPDATE_MEMO
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     onMemoClick: (Long) -> Unit,
@@ -86,111 +86,142 @@ fun MainScreen(
 ) {
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = MAIN_TITLE,
-                        fontSize = Typography.bodyLarge.fontSize
-                    )
-                },
+            CommonTopAppBar(
+                title = MAIN_TITLE,
                 navigationIcon = {
                     Text(
                         text = if (isEditMode) FINISH_MEMO else UPDATE_MEMO,
                         fontSize = Typography.bodyLarge.fontSize,
                         color = MainScreenConstants.Colors.TopBarTitle,
                         modifier = Modifier
-                            .clickable {
-                                onEditModeChange(!isEditMode)
-                            }
+                            .clickable { onEditModeChange(!isEditMode) }
                             .padding(Dimens.PaddingLarge)
                     )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MainScreenConstants.Colors.TopBarBackground,
-                    titleContentColor = MainScreenConstants.Colors.TopBarTitle
-                )
+                }
             )
         },
         containerColor = MainScreenConstants.Colors.Background,
         floatingActionButton = {
-            if(!isEditMode) {
-                FloatingActionButton(
-                    onClick = onAddClick,
-                    containerColor = MainScreenConstants.Colors.FabContainer,
-                    contentColor = MainScreenConstants.Colors.FabIcon
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = ADD_MEMO
-                    )
-                }
+            if (!isEditMode) {
+                MainFab(onAddClick = onAddClick)
             }
         }
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(MainScreenConstants.Colors.Background)
+        MainScreenContent(
+            memoList = memoList,
+            isEditMode = isEditMode,
+            onMemoClick = onMemoClick,
+            onDeleteClick = onDeleteClick,
+            paddingValues = paddingValues
+        )
+    }
+}
+
+@Composable
+private fun MainFab(onAddClick: () -> Unit) {
+    FloatingActionButton(
+        onClick = onAddClick,
+        containerColor = MainScreenConstants.Colors.FabContainer,
+        contentColor = MainScreenConstants.Colors.FabIcon
+    ) {
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = ADD_MEMO
+        )
+    }
+}
+
+@Composable
+private fun MainScreenContent(
+    memoList: List<NoteData>,
+    isEditMode: Boolean,
+    onMemoClick: (Long) -> Unit,
+    onDeleteClick: (NoteData) -> Unit,
+    paddingValues: PaddingValues
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+            .background(MainScreenConstants.Colors.Background)
+    ) {
+        if (memoList.isEmpty()) {
+            EmptyMemoState()
+        } else {
+            MemoList(
+                memoList = memoList,
+                isEditMode = isEditMode,
+                onMemoClick = onMemoClick,
+                onDeleteClick = onDeleteClick
+            )
+        }
+    }
+}
+
+@Composable
+private fun EmptyMemoState() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            if (memoList.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = null,
-                            modifier = Modifier.size(64.dp),
-                            tint = Color.Gray.copy(alpha = 0.6f)
-                        )
-                        Spacer(modifier = Modifier.height(Dimens.PaddingLarge))
-                        Text(
-                            text = NOT_MEMO,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Color.Gray
-                        )
-                        Spacer(modifier = Modifier.height(Dimens.PaddingSmall))
-                        Text(
-                            text = NOT_MEMO_ADD,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.LightGray
-                        )
+            Icon(
+                imageVector = Icons.Default.Notifications,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = Color.Gray.copy(alpha = 0.6f)
+            )
+            Spacer(modifier = Modifier.height(Dimens.PaddingLarge))
+            Text(
+                text = NOT_MEMO,
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.Gray
+            )
+            Spacer(modifier = Modifier.height(Dimens.PaddingSmall))
+            Text(
+                text = NOT_MEMO_ADD,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.LightGray
+            )
+        }
+    }
+}
+
+@Composable
+private fun MemoList(
+    memoList: List<NoteData>,
+    isEditMode: Boolean,
+    onMemoClick: (Long) -> Unit,
+    onDeleteClick: (NoteData) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(MainScreenConstants.Dimensions.ScreenHorizontalPadding)
+            .clip(MainScreenConstants.Shapes.ContentShape)
+            .background(MainScreenConstants.Colors.ContentBackground),
+        contentPadding = PaddingValues(
+            vertical = MainScreenConstants.Dimensions.ContentPaddingVertical,
+            horizontal = MainScreenConstants.Dimensions.ContentPaddingHorizontal
+        )
+    ) {
+        items(
+            items = memoList,
+            key = { it.id }
+        ) { memo ->
+            MemoItem(
+                memo = memo,
+                onClick = {
+                    if (!isEditMode) {
+                        onMemoClick(memo.id)
                     }
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(MainScreenConstants.Dimensions.ScreenHorizontalPadding)
-                        .clip(MainScreenConstants.Shapes.ContentShape)
-                        .background(MainScreenConstants.Colors.ContentBackground),
-                    contentPadding = PaddingValues(
-                        vertical = MainScreenConstants.Dimensions.ContentPaddingVertical,
-                        horizontal = MainScreenConstants.Dimensions.ContentPaddingHorizontal
-                    )
-                ) {
-                    items(
-                        items = memoList,
-                        key = { it.id }
-                    ) { memo ->
-                        MemoItem(
-                            memo = memo,
-                            onClick = {
-                                if (!isEditMode) {
-                                    onMemoClick(memo.id)
-                                }
-                            },
-                            isEditMode = isEditMode,
-                            onDeleteClick = { onDeleteClick(memo) }
-                        )
-                    }
-                }
-            }
+                },
+                isEditMode = isEditMode,
+                onDeleteClick = { onDeleteClick(memo) }
+            )
         }
     }
 }
